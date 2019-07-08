@@ -15,7 +15,7 @@ use url::Url;
 #[derive(Clone, Debug)]
 pub struct Client {
     inner: InnerClient,
-    account_id_to_secret_phrase: Arc<HashMap<u64, String>>,
+    account_id_to_secret_phrase: Arc<HashMap<String, String>>,
     base_uri: Url,
     total_size_gb: usize,
     headers: Arc<HeaderMap>,
@@ -24,7 +24,10 @@ pub struct Client {
 /// Parameters ussed for nonce submission.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SubmissionParameters {
-    pub account_id: u64,
+    // pub account_id: u64,
+    // pub account_id: &str,
+    // pub account_id: Arc<String>,
+    pub account_id: [u8; 20],
     pub nonce: u64,
     pub height: u64,
     pub block: u64,
@@ -116,7 +119,7 @@ impl Client {
     /// Create a new client communicating with Pool/Proxy/Wallet.
     pub fn new(
         base_uri: Url,
-        mut secret_phrases: HashMap<u64, String>,
+        mut secret_phrases: HashMap<String, String>,
         timeout: u64,
         total_size_gb: usize,
         proxy_details: ProxyDetails,
@@ -187,23 +190,24 @@ impl Client {
         info!("satoshi submit nounce ");
         let secret_phrase = self
             .account_id_to_secret_phrase
-            .get(&submission_data.account_id);
-        info!("!!!!! secret_phrase: {:#?}", secret_phrase);
+            .get(&hex::encode(submission_data.account_id));
+        // info!("!!!!! secret_phrase: {:#?}", secret_phrase);
 
         // If we don't have a secret phrase then we most likely talk to a pool or a proxy.
         // Both can make use of the deadline, e.g. a proxy won't validate deadlines but still
         // needs to rank the deadlines.
         // The best thing is that legacy proxies use the unadjusted deadlines so...
         // yay another parameter!
-        let deadline = if secret_phrase.is_none() {
-            Some(submission_data.deadline_unadjusted)
-        } else {
-            None
-        };
+        // let deadline = if secret_phrase.is_none() {
+        //     Some(submission_data.deadline_unadjusted)
+        // } else {
+        //     None
+        // };
+        let deadline = Some(submission_data.deadline_unadjusted);
 
         let query = SubmitNonceRequest {
             request_type: &"submitNonce",
-            account_id: submission_data.account_id,
+            account_id: &hex::encode(submission_data.account_id),
             nonce: submission_data.nonce,
             secret_phrase,
             blockheight: submission_data.height,

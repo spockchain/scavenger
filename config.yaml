@@ -2,13 +2,20 @@
 # YOU DO NOT NEED TO ENTER YOUR PASSPHRASE FOR POOL MINING.
 # NEVER POST YOUR CONFIG.YAML INCLUDING YOUR PASSPHRASE TO ANY BOARD OR CHAT!
 account_id_to_secret_phrase:                   # define accounts and passphrases for solo mining
-  10282355196851764065: 'glad suffer red during single glow shut slam hill death lust although'          # Bold's example wallet
-  1796535821016683299: 'stand rude those door invite reflection anywhere lace safe hidden fur horrible'  # Johnny's example wallet
-  16495355948904182536: 'just swirl breeze swirl grade twenty buy son settle cigarette cap maybe'  # Johnny's example wallet
+  # 10282355196851764065: 'glad suffer red during single glow shut slam hill death lust although'          # Bold's example wallet
+  # 1796535821016683299: 'stand rude those door invite reflection anywhere lace safe hidden fur horrible'  # Johnny's example wallet
+  # 16495355948904182536: 'just swirl breeze swirl grade twenty buy son settle cigarette cap maybe'  # Johnny's example wallet
+  'fafee1d4a4091b1a87f50cb89e3943eeeda6a2f2': 'just swirl breeze swirl grade twenty buy son settle cigarette cap maybe'  # Johnny's example wallet
+  # 5341368109313186875: 'jaw shore ignorance whisper someone straight wrist utter mirror promise simply bit'  # Johnny's example wallet
+  # 16495355948904182536: null  # Johnny's example wallet
 
 plot_dirs:
    # - 'test_data'
-   - '/Users/Robin/src/burst/plot_dir'
+   # - '/Users/Robin/src/burst/plot_dir'
+   # - '/Users/Robin/src/poc-foundation/plotdir/plotdir_5341'
+   # - '/Users/Robin/src/poc-foundation/plotdir/plotdir_1649'
+   - '/Users/Robin/src/poc-foundation/plotdir/plotdir_1649_test/'
+   # - '/Users/Robin/src/poc-foundation/plotdir/plotdir_aaaaa/'
    # - '~/src/burst/plots'
 #  - 'C:\second\windows\plot\dir'
 #  - '/first/linux/plot/dir'
@@ -17,6 +24,7 @@ plot_dirs:
 # url: 'http://50-50-pool.burst.cryptoguru.org:8124'  # cryptoguru 50-50 pool
 # url: 'http://teb.ai:8000/'  # cryptoguru 50-50 pool
 url: 'http://localhost:8080'  # cryptoguru 50-50 pool
+# url: 'http://localhost:6876'  # cryptoguru 50-50 pool burst
 #url: 'http://dummypool.megash.it'                  # dummypool with constant scoop number for benchmarking
 
 # RUST_BACKTRACE: 1
@@ -37,10 +45,10 @@ gpu_nonces_per_cache: 262144          # default 262144
 gpu_mem_mapping: false                # default false
 gpu_async: false                      # default false
 
-target_deadline: 18446744073709551615 # default u32::MAX
+target_deadline: 104416385896662299 # default u32::MAX
 account_id_to_target_deadline:        # target dls for multi-id (optional)
- 10282355196851764065: 18446744073709551615
- 1796535821016683299: 55555555
+ "10282355196851764065": 18446744073709551615
+ # 1796535821016683299: 55555555
 
 get_mining_info_interval: 3000        # default 3000ms
 timeout: 5000                         # default 5000ms

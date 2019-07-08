@@ -7,7 +7,8 @@ use std::fmt;
 #[serde(rename_all = "camelCase")]
 pub struct SubmitNonceRequest<'a> {
     pub request_type: &'a str,
-    pub account_id: u64,
+    // pub account_id: u64,
+    pub account_id: &'a str,
     pub nonce: u64,
     pub secret_phrase: Option<&'a String>,
     pub blockheight: u64,

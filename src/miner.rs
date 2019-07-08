@@ -32,13 +32,14 @@ use std::u64;
 use stopwatch::Stopwatch;
 use tokio::prelude::*;
 use tokio::runtime::TaskExecutor;
+use hex;
 
 pub struct Miner {
     reader: Reader,
     request_handler: RequestHandler,
     rx_nonce_data: mpsc::Receiver<NonceData>,
     target_deadline: u64,
-    account_id_to_target_deadline: HashMap<u64, u64>,
+    account_id_to_target_deadline: HashMap<String, u64>,
     state: Arc<Mutex<State>>,
     reader_task_count: usize,
     get_mining_info_interval: u64,
@@ -51,7 +52,7 @@ pub struct State {
     generation_signature_bytes: [u8; 32],
     height: u64,
     block: u64,
-    account_id_to_best_deadline: HashMap<u64, u64>,
+    account_id_to_best_deadline: HashMap<String, u64>,
     server_target_deadline: u64,
     base_target: u64,
     sw: Stopwatch,
@@ -115,7 +116,8 @@ pub struct NonceData {
     pub deadline: u64,
     pub nonce: u64,
     pub reader_task_processed: bool,
-    pub account_id: u64,
+    // pub account_id: u64,
+    pub account_id: [u8; 20],
 }
 
 pub trait Buffer {
@@ -539,29 +541,29 @@ impl Miner {
                 .for_each(move |nonce_data| {
                     let mut state = state.lock().unwrap();
                     let deadline = nonce_data.deadline / nonce_data.base_target;
-                    info!("satoshi deadline: {}, height: {}, nounce_data.height: {}", deadline, state.height, nonce_data.height);
                     if state.height == nonce_data.height {
                         let best_deadline = *state
                             .account_id_to_best_deadline
-                            .get(&nonce_data.account_id)
+                            .get(&hex::encode(nonce_data.account_id))
                             .unwrap_or(&u64::MAX);
                         info!("best deadline: {}, deadline: {}, server_target_deadline: {}, account_id_to_target_deadline: {}",
                             best_deadline,
                             deadline,
                             state.server_target_deadline,
-                            *(account_id_to_target_deadline.get(&nonce_data.account_id).unwrap_or(&target_deadline)));
+                            *(account_id_to_target_deadline.get(&hex::encode(nonce_data.account_id)).unwrap_or(&target_deadline)));
                         if best_deadline > deadline
                             && deadline
                                 < min(
                                     state.server_target_deadline,
                                     *(account_id_to_target_deadline
-                                        .get(&nonce_data.account_id)
+                                        .get(&hex::encode(nonce_data.account_id))
                                         .unwrap_or(&target_deadline)),
                                 )
                         {
                             state
                                 .account_id_to_best_deadline
-                                .insert(nonce_data.account_id, deadline);
+                                .insert(hex::encode(nonce_data.account_id), deadline);
+                            info!("satoshi deadline: {}, height: {}, nonce_data.nonce: {}, nounce_data.height: {}, nonce_data.block: {}, nonce_data.base_target: {}, nonce_data.deadline: {}, nonce_data.account_id:{:#?} , generation_signature:{}, scoop: {}", deadline, state.height, nonce_data.nonce, nonce_data.height, nonce_data.block, nonce_data.base_target, nonce_data.deadline, nonce_data.account_id, state.generation_signature, state.scoop);
                             request_handler.submit_nonce(
                                 nonce_data.account_id,
                                 nonce_data.nonce,

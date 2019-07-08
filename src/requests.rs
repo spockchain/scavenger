@@ -6,11 +6,13 @@ use futures::stream::Stream;
 use futures::sync::mpsc;
 use std::collections::HashMap;
 use std::error::Error;
+use std::sync::Arc;
 use std::time::Duration;
 use std::u64;
 use tokio;
 use tokio::runtime::TaskExecutor;
 use url::Url;
+use hex;
 
 #[derive(Clone)]
 pub struct RequestHandler {
@@ -21,7 +23,7 @@ pub struct RequestHandler {
 impl RequestHandler {
     pub fn new(
         base_uri: Url,
-        secret_phrases: HashMap<u64, String>,
+        secret_phrases: HashMap<String, String>,
         timeout: u64,
         total_size_gb: usize,
         send_proxy_details: bool,
@@ -67,6 +69,7 @@ impl RequestHandler {
         let stream = PrioRetry::new(rx, Duration::from_secs(3))
             .and_then(move |submission_params| {
                 let tx_submit_data = tx_submit_data.clone();
+                let submission_params = submission_params.clone();
                 client
                     .clone()
                     .submit_nonce(&submission_params)
@@ -76,14 +79,14 @@ impl RequestHandler {
                                 if submission_params.deadline != res.deadline {
                                     log_deadline_mismatch(
                                         submission_params.height,
-                                        submission_params.account_id,
+                                        hex::encode(submission_params.account_id),
                                         submission_params.nonce,
                                         submission_params.deadline,
                                         res.deadline,
                                     );
                                 } else {
                                     log_submission_accepted(
-                                        submission_params.account_id,
+                                        hex::encode(submission_params.account_id),
                                         submission_params.nonce,
                                         submission_params.deadline,
                                     );
@@ -94,18 +97,18 @@ impl RequestHandler {
                                 // experiencing too much load expect the submission to be resent later.
                                 if e.message.is_empty() || e.message == "limit exceeded" {
                                     log_pool_busy(
-                                        submission_params.account_id,
+                                        hex::encode(submission_params.account_id),
                                         submission_params.nonce,
                                         submission_params.deadline,
                                     );
-                                    let res = tx_submit_data.unbounded_send(submission_params);
+                                    let res = tx_submit_data.unbounded_send(submission_params.clone());
                                     if let Err(e) = res {
                                         error!("can't send submission params: {}", e);
                                     }
                                 } else {
                                     log_submission_not_accepted(
                                         submission_params.height,
-                                        submission_params.account_id,
+                                        hex::encode(submission_params.account_id),
                                         submission_params.nonce,
                                         submission_params.deadline,
                                         e.code,
@@ -115,7 +118,7 @@ impl RequestHandler {
                             }
                             Err(FetchError::Http(x)) => {
                                 log_submission_failed(
-                                    submission_params.account_id,
+                                    hex::encode(submission_params.account_id),
                                     submission_params.nonce,
                                     submission_params.deadline,
                                     x.description(),
@@ -140,7 +143,7 @@ impl RequestHandler {
 
     pub fn submit_nonce(
         &self,
-        account_id: u64,
+        account_id: [u8; 20],
         nonce: u64,
         height: u64,
         block: u64,
@@ -149,7 +152,7 @@ impl RequestHandler {
         gen_sig: [u8; 32],
     ) {
         let res = self.tx_submit_data.unbounded_send(SubmissionParameters {
-            account_id,
+            account_id: account_id,
             nonce,
             height,
             block,
@@ -165,7 +168,7 @@ impl RequestHandler {
 
 fn log_deadline_mismatch(
     height: u64,
-    account_id: u64,
+    account_id: String,
     nonce: u64,
     deadline: u64,
     deadline_pool: u64,
@@ -177,7 +180,7 @@ fn log_deadline_mismatch(
     );
 }
 
-fn log_submission_failed(account_id: u64, nonce: u64, deadline: u64, err: &str) {
+fn log_submission_failed(account_id: String, nonce: u64, deadline: u64, err: &str) {
     warn!(
         "{: <80}",
         format!(
@@ -189,7 +192,7 @@ fn log_submission_failed(account_id: u64, nonce: u64, deadline: u64, err: &str) 
 
 fn log_submission_not_accepted(
     height: u64,
-    account_id: u64,
+    account_id: String,
     nonce: u64,
     deadline: u64,
     err_code: i32,
@@ -202,14 +205,14 @@ fn log_submission_not_accepted(
     );
 }
 
-fn log_submission_accepted(account_id: u64, nonce: u64, deadline: u64) {
+fn log_submission_accepted(account_id: String, nonce: u64, deadline: u64) {
     info!(
         "deadline accepted: account={}, nonce={}, deadline={}",
         account_id, nonce, deadline
     );
 }
 
-fn log_pool_busy(account_id: u64, nonce: u64, deadline: u64) {
+fn log_pool_busy(account_id: String, nonce: u64, deadline: u64) {
     info!(
         "pool busy, retrying: account={}, nonce={}, deadline={}",
         account_id, nonce, deadline

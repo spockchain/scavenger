@@ -103,7 +103,7 @@ pub fn hash(
                         deadline,
                         nonce: 0,
                         reader_task_processed: read_reply.info.finished,
-                        account_id: read_reply.info.account_id,
+                        account_id: *read_reply.info.account_id,
                     })
                     .wait()
                     .expect("CPU worker failed to send nonce data");
@@ -216,7 +216,7 @@ pub fn hash(
                 deadline,
                 nonce: offset + read_reply.info.start_nonce,
                 reader_task_processed: read_reply.info.finished,
-                account_id: read_reply.info.account_id,
+                account_id: *read_reply.info.account_id,
             })
             .wait()
             .expect("CPU worker failed to send nonce data");

@@ -15,7 +15,7 @@ pub enum Benchmark {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Cfg {
     #[serde(default = "default_secret_phrase")]
-    pub account_id_to_secret_phrase: HashMap<u64, String>,
+    pub account_id_to_secret_phrase: HashMap<String, String>,
 
     pub plot_dirs: Vec<PathBuf>,
 
@@ -68,7 +68,7 @@ pub struct Cfg {
     pub target_deadline: u64,
 
     #[serde(default = "default_account_id_to_target_deadline")]
-    pub account_id_to_target_deadline: HashMap<u64, u64>,
+    pub account_id_to_target_deadline: HashMap<String, u64>,
 
     #[serde(default = "default_get_mining_info_interval")]
     pub get_mining_info_interval: u64,
@@ -123,7 +123,7 @@ impl<'de> Deserialize<'de> for Benchmark {
     }
 }
 
-fn default_secret_phrase() -> HashMap<u64, String> {
+fn default_secret_phrase() -> HashMap<String, String> {
     HashMap::new()
 }
 
@@ -187,7 +187,7 @@ fn default_target_deadline() -> u64 {
     u64::from(u32::MAX)
 }
 
-fn default_account_id_to_target_deadline() -> HashMap<u64, u64> {
+fn default_account_id_to_target_deadline() -> HashMap<String, u64> {
     HashMap::new()
 }
 
