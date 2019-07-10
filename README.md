@@ -1,5 +1,8 @@
 Scavenger can also be installed directly via cargo:
 
+### Config
+Update plot_dirs and url in config.yaml before running.
+
 ``` shell
 cargo install scavenger
 ```
